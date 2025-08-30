@@ -1843,13 +1843,17 @@
 (function ($, app, i18n) {
     var ui = app.ns("ui");
 
-    ui.RefreshButton = ui.SplitButton.extend({
+    ui.RefreshButton = ui.AbstractWidget.extend({
         defaults: {
             timer: -1,
         },
         init: function (parent) {
-            this.config.label = i18n.text("General.RefreshResults");
             this._super(parent);
+            this.value = this.config.timer;
+            this.el = $(this._main_template());
+            this.selectEl = this.el.find(".uiRefreshButton-select");
+            this.iconEl = this.el.find(".uiRefreshButton-icon");
+            this.attach(parent);
             this.set(this.config.timer);
         },
         set: function (value) {
@@ -1857,25 +1861,57 @@
             window.clearInterval(this._timer);
             if (this.value > 0) {
                 this._timer = window.setInterval(this._refresh_handler, this.value);
+                this.el.addClass("auto-refresh");
+            } else {
+                this.el.removeClass("auto-refresh");
             }
         },
-        _click_handler: function () {
-            this._refresh_handler();
+        disable: function () {
+            this.selectEl.prop("disabled", true);
+            this.iconEl.addClass("disabled");
         },
-        _select_handler: function (el, event) {
-            this.set(event.value);
-            this.fire("change", this);
+        enable: function () {
+            this.selectEl.prop("disabled", false);
+            this.iconEl.removeClass("disabled");
         },
         _refresh_handler: function () {
             this.fire("refresh", this);
         },
-        _getItems: function () {
-            return [
-                { text: i18n.text("General.ManualRefresh"), value: -1 },
-                { text: i18n.text("General.RefreshQuickly"), value: 100 },
-                { text: i18n.text("General.Refresh5seconds"), value: 5000 },
-                { text: i18n.text("General.Refresh1minute"), value: 60000 },
-            ];
+        _select_handler: function (jEv) {
+            var value = parseInt($(jEv.target).val());
+            this.set(value);
+            this.fire("change", this);
+        },
+        _icon_click_handler: function () {
+            this._refresh_handler();
+        },
+        _main_template: function () {
+            return {
+                tag: "DIV",
+                cls: "uiRefreshButton",
+                children: [
+                    {
+                        tag: "SELECT",
+                        cls: "uiRefreshButton-select",
+                        onchange: this._select_handler,
+                        children: [
+                            { tag: "OPTION", value: "-1", text: i18n.text("General.ManualRefresh") },
+                            { tag: "OPTION", value: "5000", text: i18n.text("General.Refresh5seconds") },
+                            { tag: "OPTION", value: "15000", text: i18n.text("General.Refresh15seconds") },
+                            { tag: "OPTION", value: "30000", text: i18n.text("General.Refresh30seconds") },
+                        ],
+                    },
+                    {
+                        tag: "BUTTON",
+                        cls: "uiRefreshButton-icon",
+                        type: "button",
+                        onclick: this._icon_click_handler,
+                        children: [
+                            { tag: "SPAN", cls: "refresh-icon", text: "↻" }
+                        ],
+                    },
+                ],
+            };
         },
     });
 })(this.jQuery, this.app, this.i18n);
@@ -2133,11 +2169,31 @@
         _getPosition: function (jEv) {
             var right = !!$(jEv.target).parents(".pull-right").length;
             var parent = $(jEv.target).closest("BUTTON");
-            return parent
+            var basePosition = parent
                 .vOffset()
-                .addY(parent.vSize().y)
-                .addX(right ? parent.vSize().x - this.el.vOuterSize().x : 0)
-                .asOffset();
+                .addY(parent.vSize().y);
+
+            if (right) {
+                basePosition = basePosition.addX(parent.vSize().x - this.el.vOuterSize().x);
+            }
+
+            var windowWidth = $(window).width();
+            var windowHeight = $(window).height();
+            var menuWidth = this.el.outerWidth();
+            var menuHeight = this.el.outerHeight();
+
+            if (basePosition.x + menuWidth > windowWidth) {
+                basePosition = basePosition.addX(windowWidth - basePosition.x - menuWidth - 10);
+            }
+
+            if (basePosition.y + menuHeight > windowHeight) {
+                basePosition = basePosition.addY(-parent.vSize().y - menuHeight);
+            }
+
+            if (basePosition.x < 10) basePosition = basePosition.addX(10 - basePosition.x);
+            if (basePosition.y < 10) basePosition = basePosition.addY(10 - basePosition.y);
+            
+            return basePosition.asOffset();
         },
     });
 })(this.app);
@@ -5277,6 +5333,16 @@
             this.cluster = this.config.cluster;
             this._clusterState = this.config.clusterState;
             this._clusterState.on("data", this._refresh_handler);
+
+            this.selectedIndices = [];
+            this.maxSelection = 5;
+
+            this._deleteButton = new ui.Button({
+                label: i18n.text("IndexOverview.DeleteSelected"),
+                cls: "uiIndexOverview-deleteButton",
+                onclick: this._deleteSelected_handler,
+            });
+            
             this.el = $(this._main_template());
             this._refresh_handler();
         },
@@ -5371,7 +5437,17 @@
                             {
                                 tag: "TR",
                                 children: [
-                                    { tag: "TH" },
+                                    { 
+                                        tag: "TH", 
+                                        children: [
+                                            { 
+                                                tag: "INPUT", 
+                                                type: "checkbox", 
+                                                cls: "uiIndexOverview-checkbox",
+                                                onclick: this._selectAll_handler 
+                                            }
+                                        ] 
+                                    },
                                     { tag: "TH", children: [{ tag: "STRONG", text: "Aliases" }] },
                                     { tag: "TH", children: [{ tag: "STRONG", text: "Creation Date" }] },
 
@@ -5394,6 +5470,18 @@
             return {
                 tag: "TR",
                 children: [
+                    { 
+                        tag: "TD", 
+                        children: [
+                            { 
+                                tag: "INPUT", 
+                                type: "checkbox", 
+                                cls: "uiIndexOverview-checkbox",
+                                "data-index": index.name,
+                                onclick: this._selectIndex_handler.bind(this, index.name)
+                            }
+                        ] 
+                    },
                     { tag: "TD", children: [{ tag: "STRONG", text: index.name }] },
                     { tag: "TD", text: index.aliases ? index.aliases.join(",") : "" },
                     { tag: "TD", text: index.creationDate },
@@ -5423,11 +5511,125 @@
                                 label: i18n.text("ClusterOverview.NewIndex"),
                                 onclick: this._newIndex_handler,
                             }),
+                            this._deleteButton,
+                            { 
+                                tag: "SPAN", 
+                                cls: "uiIndexOverview-selectedCount",
+                                text: i18n.text("IndexOverview.SelectMax")
+                            }
                         ],
                     }),
                     { tag: "DIV", cls: "uiIndexOverview-table", children: this._indexViewEl },
                 ],
             };
+        },
+
+        _selectIndex_handler: function(indexName, ev) {
+            var checkbox = ev.target;
+            var isChecked = checkbox.checked;
+            
+            if (isChecked) {
+                if (this.selectedIndices.length >= this.maxSelection) {
+                    checkbox.checked = false;
+                    alert(i18n.text("IndexOverview.TooManySelected"));
+                    return;
+                }
+                this.selectedIndices.push(indexName);
+            } else {
+                var index = this.selectedIndices.indexOf(indexName);
+                if (index > -1) {
+                    this.selectedIndices.splice(index, 1);
+                }
+            }
+            
+            this._updateDeleteButton();
+        },
+
+        _selectAll_handler: function(ev) {
+            var checkbox = ev.target;
+            var isChecked = checkbox.checked;
+            var indexCheckboxes = this.el.find("tbody input[type='checkbox']");
+            
+            if (isChecked) {
+                var maxToSelect = Math.min(this.maxSelection, indexCheckboxes.length);
+                indexCheckboxes.each(function(i, cb) {
+                    if (i < maxToSelect) {
+                        cb.checked = true;
+                        var indexName = $(cb).data("index");
+                        if (this.selectedIndices.indexOf(indexName) === -1) {
+                            this.selectedIndices.push(indexName);
+                        }
+                    }
+                }.bind(this));
+            } else {
+                indexCheckboxes.prop("checked", false);
+                this.selectedIndices = [];
+            }
+            
+            this._updateDeleteButton();
+        },
+
+        _updateDeleteButton: function() {
+            this._deleteButton.el.prop("disabled", this.selectedIndices.length === 0);
+        },
+
+        _deleteSelected_handler: function() {
+            if (this.selectedIndices.length === 0) {
+                alert(i18n.text("IndexOverview.NoIndexSelected"));
+                return;
+            }
+
+            var selectedNames = this.selectedIndices.join(", ");
+
+            if (prompt(i18n.text("IndexOverview.DeleteMessage", i18n.text("Command.DELETE"), selectedNames)) === i18n.text("Command.DELETE")) {
+                this._performDelete();
+            }
+        },
+
+        _performDelete: function() {
+            var self = this;
+            var deletedCount = 0;
+            var failedCount = 0;
+            var totalCount = this.selectedIndices.length;
+
+            var deleteNext = function(index) {
+                if (index >= self.selectedIndices.length) {
+                    if (failedCount === 0) {
+                        alert(i18n.text("IndexOverview.DeleteSuccess"));
+                    } else {
+                        alert(i18n.text("IndexOverview.DeleteFailed"));
+                    }
+                    self.selectedIndices = [];
+                    self._updateDeleteButton();
+
+                    // self._clusterState.refresh();
+                    return;
+                }
+                
+                var indexName = self.selectedIndices[index];
+
+                setTimeout(function() {
+                    self.cluster.delete(
+                        encodeURIComponent(indexName),
+                        null,
+                        function(response) {
+                            deletedCount++;
+                            setTimeout(function() {
+                                deleteNext(index + 1);
+                            }, 2000);
+                        },
+                        function(error) {
+                            console.error("Failed to delete index:", indexName, error);
+                            failedCount++;
+                            setTimeout(function() {
+                                deleteNext(index + 1);
+                            }, 2000);
+                        }
+                    );
+                }, 1000);
+            };
+            
+            deleteNext(0);
         },
     });
 })(this.jQuery, this.app, this.i18n);
