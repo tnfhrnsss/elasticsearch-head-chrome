@@ -1,4 +1,15 @@
-# Multi Elasticsearch Head
+# Multi Elasticsearch Head (Enhanced Fork)
+
+This is a fork of [Multi Elasticsearch Head](https://github.com/vorapoap/elasticsearch-head-chrome) with additional features for improved usability in multi-tenant Elasticsearch environments.
+
+## 🚀 New Features (2025-08)
+
+### Index Filtering
+- **Enhanced Index Selector**: Added filtering capability to the index selector in the Structured Query tab
+- **Multi-tenant Support**: Improved usability for environments with tenant-prefixed index names
+
+-----
+## Original Project
 
 This is a major improvement over Elasticsearch Head extension.
 * Add dropdown for multiple Elasticsearch Head end-points
@@ -39,5 +50,14 @@ To make this more convenient to use (ie: without having to enter in the remote E
 	* setup your tunnel (in my example, port 29200)
 	  `ssh -N -L 29200:myeshost:9200 myusername@jumphost`
 	* then use `chrome-extension://ffmkiejjmecolpfloofpjologoblkegm/elasticsearch-head/index.html?base_uri=http://localhost:29200` to get to the remote ES cluster.
+
+## License
+
+This project is licensed under the MIT License - see the original project for details.
+
+## Acknowledgments
+
+- Original project: [Multi Elasticsearch Head](https://github.com/lyfeyaj/elasticsearch-head-chrome)
+- Based on: [Elasticsearch Head](https://github.com/mobz/elasticsearch-head)
 
 
