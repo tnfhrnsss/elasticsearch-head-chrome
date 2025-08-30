@@ -5018,6 +5018,7 @@
             this.el = $(this._main_template());
             this.attach(parent);
             this.cluster = this.config.cluster;
+            this.allIndices = [];
             this.update();
         },
         update: function () {
@@ -5025,13 +5026,116 @@
         },
 
         _update_handler: function (data) {
-            var options = [];
+            this.allIndices = [];
             var index_names = Object.keys(data.indices).sort();
             for (var i = 0; i < index_names.length; i++) {
-                name = index_names[i];
-                options.push(this._option_template(name, data.indices[name]));
+                var name = index_names[i];
+                this.allIndices.push({
+                    name: name,
+                    data: data.indices[name]
+                });
             }
-            this.el.find(".uiIndexSelector-select").empty().append(this._select_template(options));
+            setTimeout(function() {
+                this._initializeOptions();
+            }.bind(this), 0);
+        },
+
+        _updateOptions: function() {
+            var filterInput = this.el.find(".uiIndexSelector-selectInput");
+            var filterValue = filterInput.length > 0 ? filterInput.val() || "" : "";
+            filterValue = filterValue.toLowerCase();
+            
+            var filteredIndices = this.allIndices.filter(function(index) {
+                return index.name.toLowerCase().includes(filterValue);
+            });
+
+            var dropdown = this.el.find(".uiIndexSelector-dropdown");
+            if (dropdown.length > 0) {
+                dropdown.empty();
+
+                var maxLength = 0;
+                var optionTexts = [];
+                
+                for (var i = 0; i < filteredIndices.length; i++) {
+                    var index = filteredIndices[i];
+                    var optionText = i18n.text("IndexSelector.NameWithDocs", index.name, index.data.primaries.docs.count);
+                    optionTexts.push(optionText);
+                    maxLength = Math.max(maxLength, optionText.length);
+                }
+
+                if (maxLength > 0) {
+                    var estimatedWidth = Math.max(200, maxLength * 8);
+                    filterInput.css('width', estimatedWidth + 'px');
+                }
+                
+                for (var j = 0; j < filteredIndices.length; j++) {
+                    var index = filteredIndices[j];
+                    var optionEl = $("<div>")
+                        .addClass("uiIndexSelector-option")
+                        .attr("data-value", index.name)
+                        .text(optionTexts[j])
+                        .click(function(name) {
+                            return function() {
+                                this._optionSelected_handler(name);
+                            }.bind(this);
+                        }.bind(this)(index.name));
+                    dropdown.append(optionEl);
+                }
+            }
+        },
+
+        _filterChanged_handler: function() {
+            this._updateOptions();
+        },
+
+        _showDropdown_handler: function() {
+            this.el.find(".uiIndexSelector-dropdown").show();
+        },
+
+        _hideDropdown_handler: function() {
+            setTimeout(function() {
+                this.el.find(".uiIndexSelector-dropdown").hide();
+            }.bind(this), 200);
+        },
+
+        _initializeOptions: function() {
+            var options = [];
+            var maxLength = 0;
+
+            for (var i = 0; i < this.allIndices.length; i++) {
+                var index = this.allIndices[i];
+                var optionText = i18n.text("IndexSelector.NameWithDocs", index.name, index.data.primaries.docs.count);
+                maxLength = Math.max(maxLength, optionText.length);
+                options.push(this._option_template(index.name, index.data));
+            }
+            
+            var selectContainer = this.el.find(".uiIndexSelector-select");
+            if (selectContainer.length > 0) {
+                selectContainer.empty().append(this._select_template(options));
+
+                if (maxLength > 0) {
+                    var estimatedWidth = Math.max(200, maxLength * 8);
+                    this.el.find(".uiIndexSelector-selectInput").css('width', estimatedWidth + 'px');
+                }
+
+                var self = this;
+                this.el.find(".uiIndexSelector-selectInput").on("keyup", function() {
+                    self._filterChanged_handler();
+                });
+                
+                this.el.find(".uiIndexSelector-selectInput").on("focus", function() {
+                    self._showDropdown_handler();
+                });
+                
+                this.el.find(".uiIndexSelector-selectInput").on("blur", function() {
+                    self._hideDropdown_handler();
+                });
+            }
+        },
+
+        _optionSelected_handler: function(name) {
+            this.el.find(".uiIndexSelector-selectInput").val(name);
+            this.el.find(".uiIndexSelector-dropdown").hide();
             this._indexChanged_handler();
         },
 
@@ -5042,23 +5146,41 @@
                 children: i18n.complex("IndexSelector.SearchIndexForDocs", {
                     tag: "SPAN",
                     cls: "uiIndexSelector-select",
-                }),
+                })
             };
         },
 
         _indexChanged_handler: function () {
-            this.fire("indexChanged", this.el.find("SELECT").val());
+            this.fire("indexChanged", this.el.find(".uiIndexSelector-selectInput").val());
         },
 
         _select_template: function (options) {
-            return { tag: "SELECT", children: options, onChange: this._indexChanged_handler };
+            return {
+                tag: "DIV",
+                cls: "uiIndexSelector-customSelect",
+                children: [
+                    {
+                        tag: "INPUT",
+                        type: "text",
+                        cls: "uiIndexSelector-selectInput",
+                        placeholder: i18n.text("IndexSelector.FilterPlaceholder", "Type to filter indexes...")
+                    },
+                    {
+                        tag: "DIV",
+                        cls: "uiIndexSelector-dropdown",
+                        children: options
+                    }
+                ]
+            };
         },
 
         _option_template: function (name, index) {
             return {
-                tag: "OPTION",
-                value: name,
+                tag: "DIV",
+                cls: "uiIndexSelector-option",
+                "data-value": name,
                 text: i18n.text("IndexSelector.NameWithDocs", name, index.primaries.docs.count),
+                onclick: this._optionSelected_handler.bind(this, name)
             };
         },
     });

@@ -56,6 +56,7 @@ i18n.setKeys({
 	"IndexOverview.PageTitle": "Indices Overview",
 	"IndexSelector.NameWithDocs": "{0} ({1} docs)",
 	"IndexSelector.SearchIndexForDocs": "Search {0} for documents where:",
+	"IndexSelector.FilterPlaceholder": "Type to filter indexes...",
 	"FilterBrowser.OutputType": "Output Results: {0}",
 	"FilterBrowser.OutputSize": "Number of Results: {0}",
 	"Header.ClusterHealth": "cluster health: {0} ({1} of {2})",

@@ -56,6 +56,7 @@ i18n.setKeys({
 	"IndexOverview.PageTitle": "索引概览",
 	"IndexSelector.NameWithDocs": "{0} ({1} 个文档)",
 	"IndexSelector.SearchIndexForDocs": "搜索 {0} 的文档， 查询条件:",
+	"IndexSelector.FilterPlaceholder": "输入以过滤索引...",
 	"FilterBrowser.OutputType": "返回格式: {0}",
 	"FilterBrowser.OutputSize": "显示数量: {0}",
 	"Header.ClusterHealth": "集群健康值: {0} ({1} of {2})",

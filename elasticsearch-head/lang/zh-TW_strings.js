@@ -56,6 +56,7 @@ i18n.setKeys({
 	"IndexOverview.PageTitle": "索引總覽",
 	"IndexSelector.NameWithDocs": "{0} ({1} 個文件)",
 	"IndexSelector.SearchIndexForDocs": "搜尋 {0} 的文件，查詢條件:",
+	"IndexSelector.FilterPlaceholder": "輸入以過濾索引...",
 	"FilterBrowser.OutputType": "返回格式: {0}",
 	"FilterBrowser.OutputSize": "顯示數量: {0}",
 	"Header.ClusterHealth": "叢集健康值: {0} ({1} of {2})",

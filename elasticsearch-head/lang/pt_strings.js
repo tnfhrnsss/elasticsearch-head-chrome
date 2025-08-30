@@ -56,6 +56,7 @@ i18n.setKeys({
 	"IndexOverview.PageTitle": "Visão geral dos índices",
 	"IndexSelector.NameWithDocs": "{0} ({1} documentoss)",
 	"IndexSelector.SearchIndexForDocs": "Busca {0} por documentos onde:",
+	"IndexSelector.FilterPlaceholder": "Digite para filtrar índices...",
 	"FilterBrowser.OutputType": "Resultados: {0}",
 	"FilterBrowser.OutputSize": "Número de Resultados: {0}",
 	"Header.ClusterHealth": "saúde do cluster: {0} ({1} {2})",

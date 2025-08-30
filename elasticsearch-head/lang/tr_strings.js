@@ -56,6 +56,7 @@ i18n.setKeys({
 	"IndexOverview.PageTitle": "Indeksler Genel Bakış",
 	"IndexSelector.NameWithDocs": "{0} ({1} döküman)",
 	"IndexSelector.SearchIndexForDocs": "{0} indeksinde ara:",
+	"IndexSelector.FilterPlaceholder": "İndeksleri filtrelemek için yazın...",
 	"FilterBrowser.OutputType": "Sonuç Formatı: {0}",
 	"FilterBrowser.OutputSize": "Sonuç Sayısı: {0}",
 	"Header.ClusterHealth": "Küme Durumu: {0} ({1} de {2})",

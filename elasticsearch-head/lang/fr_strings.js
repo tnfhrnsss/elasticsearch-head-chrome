@@ -55,6 +55,7 @@ i18n.setKeys({
 	"IndexCommand.ShutdownMessage": "Entrez ''{0}'' pour éteindre {1}. Le noeud NE PEUT PAS être redémarré depuis cette interface.",
 //	"IndexSelector.NameWithDocs": "{0} ({1} docs)",
 	"IndexSelector.SearchIndexForDocs": "Chercher dans {0} les documents correspondant à",
+	"IndexSelector.FilterPlaceholder": "Tapez pour filtrer les index...",
 	"FilterBrowser.OutputType": "Format d'affichage des résultats {0}",
 	"FilterBrowser.OutputSize": "Nombre de Résultats: {0}",
 	"Header.ClusterHealth": "Santé du cluster: {0} ({1} {2})",
