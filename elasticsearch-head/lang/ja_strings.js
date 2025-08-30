@@ -56,6 +56,7 @@ i18n.setKeys({
 	"IndexOverview.PageTitle": "インデックスのOverview",
 //	"IndexSelector.NameWithDocs": "{0} ({1} docs)",
 	"IndexSelector.SearchIndexForDocs": "Search {0} for documents where:",
+	"IndexSelector.FilterPlaceholder": "インデックスをフィルタするには入力してください...",
 	"FilterBrowser.OutputType": "結果の出力形式: {0} ",
 	"FilterBrowser.OutputSize": "結果の取得サイズ: {0} ",
 	"Header.ClusterHealth": "cluster health: {0} ({1} of {2})",
