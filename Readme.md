@@ -8,6 +8,18 @@ This is a fork of [Multi Elasticsearch Head](https://github.com/vorapoap/elastic
 - **Enhanced Index Selector**: Added filtering capability to the index selector in the Structured Query tab
 - **Multi-tenant Support**: Improved usability for environments with tenant-prefixed index names
 
+### Local Setting
+
+* you can use python.
+```
+cd /Users/~~/Documents/elasticsearch-head-chrome && python -m http.server 8000
+```
+
+* If you need local chrome extension, then run build.py
+```
+python build.py
+```
+
 -----
 ## Original Project
 
@@ -32,7 +44,7 @@ This was created because ElasticSearch 5 removed the ability to run ElasticSearc
 
 ## Installation
 
-Head over to [Multi Elasticsearch Head](https://chrome.google.com/webstore/detail/multi-elasticsearch-head/cpmmilfkofbeimbmgiclohpodggeheim) page on the Chrome Web Store.
+Head over to [Multi Elasticsearch Head](https://chrome.google.com/webstore/detail/multi-elasticsearch-head/cpmmilfkofbeimbmgiclohpodggeheim) page on the Chrome Web Store. 
 
 ## Usage
 
