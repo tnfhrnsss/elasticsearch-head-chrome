@@ -4489,7 +4489,10 @@
             this.prefs = services.Preferences.instance();
             this.cluster = this.config.cluster;
             this.el = $.joey(this._main_template());
-            this._updateServerSelect();
+
+            var currentUri = this.cluster ? this.cluster.base_uri : null;
+            this._updateServerSelect(currentUri);
+            
             this.cluster.get("", this._node_handler);
             $("body").bind("onconnect", this._addServer_handler);
         },
@@ -4503,6 +4506,11 @@
 
         _reconnect_handler: function () {
             var base_uri = this.el.find(".uiClusterConnect-uri").val();
+            
+            if (!base_uri) {
+                return;
+            }
+            
             var url;
             if (base_uri.indexOf("?") !== -1) {
                 url = base_uri.substring(0, base_uri.indexOf("?") - 1);
@@ -4540,10 +4548,10 @@
             var options = [];
             var added = false;
             if (cluster_list) {
-                for (i in cluster_list) {
-                    name = cluster_list[i].name;
-                    uri = cluster_list[i].uri;
-                    version = cluster_list[i].version;
+                for (var i in cluster_list) {
+                    var name = cluster_list[i].name;
+                    var uri = cluster_list[i].uri;
+                    var version = cluster_list[i].version;
                     if (!uri) continue;
                     if (uri.indexOf("?") != -1) continue;
                     options.push(this._optionCluster_template(uri, name, version));
@@ -4553,41 +4561,74 @@
                 }
             }
             if (select_uri && !added) {
-                options.push(this._optionCluster_template(uri, select_name));
+                options.push(this._optionCluster_template(select_uri, select_name));
             }
 
             this.el.find(".uiClusterSelector-select").empty().append(this._selectCluster_template(options));
             if (select_uri) {
                 this.el.find(".uiClusterSelector-select select").val(select_uri);
+            } else if (options.length > 0) {
+                var firstOption = options[0];
+                this.el.find(".uiClusterSelector-select select").val(firstOption.value);
+            } else {
+                this.el.find(".uiClusterSelector-select select").val("");
             }
         },
         _addServer_handler: function (event, data) {
             var base_uri = data.base_uri;
-            //this.el.find(".uiClusterSelector-select select").val();//this.el.find(".uiClusterConnect-uri").val();
-            cluster_list = this.prefs.get("app-cluster_list");
+            var cluster_list = this.prefs.get("app-cluster_list");
             if (!cluster_list) {
                 cluster_list = {};
             }
+
+            if (cluster_list[base_uri]) {
+                return;
+            }
+            
             cluster_list[data.base_uri] = {
                 uri: data.base_uri,
                 name: data.cluster_name,
                 version: data.cluster_version,
             };
-            for (x in cluster_list) {
-                if (x[x.length - 1] != "/") delete cluster_list[x]; // Clean up URL without trailing space.
-            }
+            
             this.prefs.set("app-cluster_list", cluster_list);
             this._updateServerSelect(base_uri, data.cluster_name);
         },
         _removeServer_handler: function () {
-            cluster_list = this.prefs.get("app-cluster_list");
-            delete cluster_list[this.el.find(".uiClusterSelector-select select").val()];
-            this.prefs.set("app-cluster_list", cluster_list);
+            var selectedUri = this.el.find(".uiClusterSelector-select select").val();
+
+            if (!selectedUri) {
+                return;
+            }
+            
+            var cluster_list = this.prefs.get("app-cluster_list");
+
+            if (cluster_list && cluster_list[selectedUri]) {
+                delete cluster_list[selectedUri];
+                this.prefs.set("app-cluster_list", cluster_list);
+            } else {
+                return;
+            }
+
             this._updateServerSelect();
-            this._reconnect_handler();
+
+            var remainingServers = Object.keys(cluster_list || {});
+            if (remainingServers.length > 0) {
+                var firstServer = remainingServers[0];
+                this.el.find(".uiClusterSelector-select select").val(firstServer);
+                this.el.find(".uiClusterConnect-uri").val(firstServer);
+                this._reconnect_handler();
+            } else {
+                this.el.find(".uiClusterConnect-uri").val("");
+            }
         },
         _changeCluster_handler: function () {
             var uri = this.el.find(".uiClusterSelector-select select").val();
+            
+            if (!uri) {
+                return;
+            }
+            
             this.el.find(".uiClusterConnect-uri").val(uri);
             this._reconnect_handler();
             this._updateServerSelect(uri, i18n.text("AnyRequest.Requesting"));
@@ -4624,9 +4665,25 @@
                             urlObject.password = data.password || "";
                         }
 
-                        this.el.find(".uiClusterConnect-uri").val(urlObject.toString());
+                        var uri = urlObject.toString();
+
+                        var cluster_list = this.prefs.get("app-cluster_list");
+                        if (!cluster_list) {
+                            cluster_list = {};
+                        }
+                        
+                        cluster_list[uri] = {
+                            uri: uri,
+                            name: "New Server",
+                            version: null
+                        };
+                        
+                        this.prefs.set("app-cluster_list", cluster_list);
+
+                        this._updateServerSelect(uri, "New Server");
+
+                        this.el.find(".uiClusterConnect-uri").val(uri);
                         this._reconnect_handler();
-                        this._updateServerSelect(uri, i18n.text("AnyRequest.Requesting"));
                     }
                 }.bind(this),
             }).open();
