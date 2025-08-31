@@ -1,8 +1,8 @@
-# Multi Elasticsearch Head (Enhanced Fork)
+# Multi Elasticsearch Head - Custom
 
 This is a fork of [Multi Elasticsearch Head](https://github.com/vorapoap/elasticsearch-head-chrome) with additional features for improved usability in multi-tenant Elasticsearch environments.
 
-## 🚀 New Features (2025-08)
+## 🚀 New Features (Custom - 2025-08)
 
 ### Index Filtering
 - **Enhanced Index Selector**: Added filtering capability to the index selector in the Structured Query tab
