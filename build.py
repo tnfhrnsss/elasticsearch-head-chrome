@@ -64,7 +64,7 @@ print('You can now load the extension in Chrome from the build directory.')
 
 create_zip = input('\nDo you want to create a ZIP file for distribution? (y/n): ').lower().strip()
 if create_zip == 'y':
-    zip_filename = 'elasticsearch-head-custom-v0.4.4.zip'
+    zip_filename = 'elasticsearch-head-custom-v0.4.5.zip'
     
     with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(build_dir):
