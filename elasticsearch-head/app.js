@@ -834,7 +834,13 @@
                     (aliases[alias] || (aliases[alias] = [])).push(index);
                 });
                 var mapping = state.metadata.indices[index].mappings;
-                for (var type in mapping) {
+
+                // ES 8+ compatibility: Check if mappings has properties directly (no types)
+                var isES8Format = mapping.properties !== undefined;
+
+                if (isES8Format) {
+                    // ES 8+ format: mappings.properties directly
+                    var type = "_doc"; // Use default type name for ES 8+
                     indices[index].types.push(type);
                     if (type in types) {
                         types[type].indices.push(index);
@@ -844,9 +850,26 @@
                             fields: {},
                         };
                     }
-                    getFields(mapping[type].properties, type, index, [fields, types[type].fields, indices[index].fields]);
-                    if (typeof mapping[type]._parent !== "undefined") {
-                        indices[index].parents[type] = mapping[type]._parent.type;
+                    getFields(mapping.properties, type, index, [fields, types[type].fields, indices[index].fields]);
+                    if (typeof mapping._parent !== "undefined") {
+                        indices[index].parents[type] = mapping._parent.type;
+                    }
+                } else {
+                    // ES 7 and below format: mappings[type].properties
+                    for (var type in mapping) {
+                        indices[index].types.push(type);
+                        if (type in types) {
+                            types[type].indices.push(index);
+                        } else {
+                            types[type] = {
+                                indices: [index],
+                                fields: {},
+                            };
+                        }
+                        getFields(mapping[type].properties, type, index, [fields, types[type].fields, indices[index].fields]);
+                        if (typeof mapping[type]._parent !== "undefined") {
+                            indices[index].parents[type] = mapping[type]._parent.type;
+                        }
                     }
                 }
             }
@@ -1175,7 +1198,7 @@
                         }
                     }
                     return row;
-                })([hit._index, hit._type], hit._source, {});
+                })([hit._index, hit._type || "_doc"], hit._source, {});
                 metaColumns.forEach(function (n) {
                     row[n] = hit[n];
                 });
@@ -4904,8 +4927,19 @@
                 }
             }
             if (data[this.config.index]) {
-                for (var type in data[this.config.index].mappings) {
-                    scan_properties([type], data[this.config.index].mappings[type]);
+                var mapping = data[this.config.index].mappings;
+
+                // ES 8+ compatibility: Check if mappings has properties directly (no types)
+                var isES8Format = mapping.properties !== undefined;
+
+                if (isES8Format) {
+                    // ES 8+ format: mappings.properties directly
+                    scan_properties(["_doc"], mapping);
+                } else {
+                    // ES 7 and below format: mappings[type].properties
+                    for (var type in mapping) {
+                        scan_properties([type], mapping[type]);
+                    }
                 }
             }
 
